@@ -1,0 +1,14 @@
+# Python系
+__pycache__
+.venv
+.idea
+
+# エディター系
+.vscode
+
+# 一時ファイルなど
+edit_version.json
+distribution.json
+modpacks
+tmp_modpacks
+store
