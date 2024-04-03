@@ -3,10 +3,12 @@ import os
 import shutil
 from typing import Literal, TypedDict
 from src.const import DISTRIBUTION, STORE_PATHS
+from src.distribution import DistributionManager
 from src.store import FileStore
 from src.types import IManifest
 
 from src.utils.common import get_files, load_or_create_json
+from src.utils.read import Read
 
 MODPACK_BASE_FOLDERS = ['requiredMods', 'manualMods', 'recommendedMods', 'resources']
 
@@ -115,6 +117,7 @@ class ModPackManager:
         self.base_path = f'./modpacks/{self.name}'
         self.manifest_path = f'{self.base_path}/manifest.json'
         self.pack_manifest: IManifest = load_or_create_json(self.manifest_path)  # type: ignore
+        self.distribution = DistributionManager()
 
     async def create(self, modpack_version: str):
         """
@@ -125,6 +128,10 @@ class ModPackManager:
         modpack_version : str
             Minecraftのバージョン
         """
+
+        modloader = Read('使用するModloaderを入力してください').enum(['forge', 'neoforge', 'fabric', 'quilt', 'liteloader']).read().value
+        modloaderVersion = Read('使用するModloaderのバージョンを入力してください').read().value
+
         self.pack_manifest['name'] = self.name
         self.pack_manifest['server'] = {
             'serverHost': 'localhost',
@@ -132,12 +139,14 @@ class ModPackManager:
         }
         self.pack_manifest['gameVersion'] = self.game_version
         self.pack_manifest['modLoader'] = {
-            'modLoaderType': 'forge',
-            'modLoaderVersion': '36.1.0'
+            'modLoaderType': modloader,
+            'modLoaderVersion': modloaderVersion
         }
         self.pack_manifest['versions'] = []
         await self.save_manifest()
         await self.add_version(modpack_version)
+        await self.distribution.add_modpack(self.name)
+        await self.distribution.save()
 
     async def add_version(self, version: str):
         """バージョンを追加します
