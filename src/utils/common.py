@@ -2,6 +2,24 @@ import json
 import os
 from typing import Any, TypedDict
 
+OS_NAME = os.name
+
+def open_explorer(path: str):
+    dir_name = os.path.abspath(path) 
+    if OS_NAME == 'nt' :
+        os.system('explorer.exe "%s"' % dir_name)
+    elif OS_NAME == "Darwin" : 
+        ## Mac固有のFinderを起動
+        pass
+    elif OS_NAME == "Linux" : 
+        ## Linux固有のソフトを起動
+        pass
+
+def load_or_none_json(path: str):
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return None
 
 def load_or_create_json(path: str, defaukltValue: list | dict[Any, Any] | None = None):
     if defaukltValue is None:

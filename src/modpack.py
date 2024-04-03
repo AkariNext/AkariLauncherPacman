@@ -2,8 +2,8 @@ import json
 import os
 import shutil
 from typing import Literal, TypedDict
-from src.const import STORE_PATHS
-from src.store import FileStore, ModStore
+from src.const import DISTRIBUTION, STORE_PATHS
+from src.store import FileStore
 from src.types import IManifest
 
 from src.utils.common import get_files, load_or_create_json
@@ -15,13 +15,10 @@ class IVersion(TypedDict):
     type: str
     key: str
 
-class IDistribution(TypedDict):
-    name: str
-    modpacks: list[str]
-    repository_type: Literal['github', 's3']
-    format_version: str
 
-DISTRIBUTION: IDistribution = load_or_create_json('./distribution.json') # type: ignore
+async def get_pack_manifest(name: str):
+    data: IManifest = load_or_create_json(f'./modpacks/{name}/manifest.json', {}) # type: ignore
+    return data
 
 
 async def get_pack_mc_version(name: str):
@@ -182,7 +179,7 @@ class ModPackManager:
             os.makedirs(os.path.dirname(f'./tmp_modpacks/{self.name}/{file["to"]}'), exist_ok=True)
             shutil.copy(f'{STORE_PATHS["files"]}/{mod["key"]}', f'./tmp_modpacks/{self.name}/{file["to"]}')
         with open('./edit_version.json', 'w') as f:
-            json.dump(modpack_version_manager.mod_version_file, f, ensure_ascii=False, indent=4)
+            json.dump({'pack_name':self.name, 'version': version, 'files': modpack_version_manager.mod_version_file}, f, ensure_ascii=False, indent=4)
 
     async def apply_change(self, version: str):
         modpack_version_manager = ModPackVersionManager(self.name, self.game_version, version)
@@ -192,7 +189,7 @@ class ModPackManager:
             edit_files = json.load(f)
 
         files = await modpack_version_manager.sync_files(dry_run=True)
-        edit_file_keys = [i['key'] for i in edit_files.values()]
+        edit_file_keys = [i['key'] for i in edit_files['files'].values()]
         files_keys = [i['key'] for i in files.values()]
 
         remove_target_keys = list(set(edit_file_keys) - set(files_keys))
