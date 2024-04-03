@@ -4,6 +4,23 @@ from typing import Any, TypedDict
 
 OS_NAME = os.name
 
+class Missing:
+    """値が存在しないことを示すクラス"""
+
+    def __repr__(self) -> str:
+        return "MISSING"
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, Missing)
+
+    def __ne__(self, other: Any) -> bool:
+        return not isinstance(other, Missing)
+
+MISSING: Any = Missing()
+
 def open_explorer(path: str):
     dir_name = os.path.abspath(path) 
     if OS_NAME == 'nt' :
